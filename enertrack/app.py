@@ -173,8 +173,8 @@ def get_global_kpis(esp_ids: list[str]):
                 "curr": kpi_inst["corriente"],
                 "pf":   kpi_inst["fp"],
                 "freq": kpi_inst["frecuencia"],
-                "ener": f"{energia_total_kwh:.2f}" if energia_total_kwh else "-",
-                "potencia_media_global_kw": f"{potencia_media_kw:.2f}" if potencia_media_kw else "-",
+                "ener": f"{energia_total_kwh:.4f}" if energia_total_kwh else "-",
+                "potencia_media_global_kw": f"{potencia_media_kw:.4f}" if potencia_media_kw else "-",
                 "sin_datos": energia_total_kwh is None,
             }
             # Determinar estado de cada nodo
@@ -357,7 +357,7 @@ def home():
     
     cur = mysql.connection.cursor()
     cur.execute(
-        """SELECT N.nodo_id, N.esp_id, N.descripcion, UN.ubicacion, UN.activo, UN.ultimo_acceso
+        """SELECT N.nodo_id, N.esp_id, UN.descripcion, UN.ubicacion, UN.activo, UN.ultimo_acceso
                FROM Nodos N JOIN UsuariosNodos UN USING(nodo_id)
                WHERE UN.usuario_id=%s""",
         (uid,),
@@ -419,20 +419,19 @@ def add_node():
         if row:
             # El nodo ya existe, solo vincularlo al usuario actual
             nodo_id = row["nodo_id"]
-            # Actualizar la descripción si es diferente
-            cur.execute("UPDATE Nodos SET descripcion=%s WHERE nodo_id=%s", (descripcion, nodo_id))
         else:
-            # El nodo no existe, crearlo
+            # El nodo no existe, crearlo (sin descripción específica)
             cur.execute(
                 "INSERT INTO Nodos (esp_id, descripcion) VALUES (%s,%s)",
-                (esp_id, descripcion),
+                (esp_id, "Nodo compartido"),  # Descripción genérica
             )
             nodo_id = cur.lastrowid
-        # Vincular al usuario (sin umbral_consumo)
+        
+        # Vincular al usuario con su propia descripción y ubicación
         cur.execute(
-            """INSERT IGNORE INTO UsuariosNodos (usuario_id, nodo_id, ubicacion)
-                    VALUES (%s,%s,%s)""",
-            (uid, nodo_id, ubicacion or None),
+            """INSERT IGNORE INTO UsuariosNodos (usuario_id, nodo_id, descripcion, ubicacion)
+                    VALUES (%s,%s,%s,%s)""",
+            (uid, nodo_id, descripcion, ubicacion or None),
         )
         mysql.connection.commit()
         flash("Nodo agregado", "success")
@@ -459,7 +458,7 @@ def nodo_dashboard(nodo_id):
     uid = session["user_id"]
     cur = mysql.connection.cursor()
     cur.execute(
-        """SELECT N.nodo_id, N.esp_id, N.descripcion, UN.ubicacion, UN.activo, UN.ultimo_acceso
+        """SELECT N.nodo_id, N.esp_id, UN.descripcion, UN.ubicacion, UN.activo, UN.ultimo_acceso
                FROM Nodos N JOIN UsuariosNodos UN USING(nodo_id)
                WHERE UN.usuario_id=%s AND N.nodo_id=%s""",
         (uid, nodo_id),
@@ -478,7 +477,7 @@ def nodo_dashboard_magnitud(nodo_id, magnitud):
     uid = session["user_id"]
     cur = mysql.connection.cursor()
     cur.execute(
-        """SELECT N.nodo_id, N.esp_id, N.descripcion, UN.ubicacion, UN.activo, UN.ultimo_acceso
+        """SELECT N.nodo_id, N.esp_id, UN.descripcion, UN.ubicacion, UN.activo, UN.ultimo_acceso
                FROM Nodos N JOIN UsuariosNodos UN USING(nodo_id)
                WHERE UN.usuario_id=%s AND N.nodo_id=%s""",
         (uid, nodo_id),
@@ -500,7 +499,7 @@ def mis_nodos():
     uid = session["user_id"]
     cur = mysql.connection.cursor()
     cur.execute(
-        """SELECT N.nodo_id, N.esp_id, N.descripcion, UN.ubicacion, UN.activo, UN.ultimo_acceso
+        """SELECT N.nodo_id, N.esp_id, UN.descripcion, UN.ubicacion, UN.activo, UN.ultimo_acceso
                FROM Nodos N JOIN UsuariosNodos UN USING(nodo_id)
                WHERE UN.usuario_id=%s
                ORDER BY N.esp_id""",
@@ -522,7 +521,7 @@ def consumo_global():
     uid = session["user_id"]
     cur = mysql.connection.cursor()
     cur.execute(
-        """SELECT N.nodo_id, N.esp_id, N.descripcion, UN.ubicacion, UN.activo, UN.ultimo_acceso
+        """SELECT N.nodo_id, N.esp_id, UN.descripcion, UN.ubicacion, UN.activo, UN.ultimo_acceso
                FROM Nodos N JOIN UsuariosNodos UN USING(nodo_id)
                WHERE UN.usuario_id=%s
                ORDER BY N.esp_id""",
@@ -570,7 +569,7 @@ def update_node(nodo_id):
     uid = session["user_id"]
     cur = mysql.connection.cursor()
     cur.execute(
-        """SELECT N.nodo_id, N.esp_id, N.descripcion, UN.ubicacion FROM Nodos N JOIN UsuariosNodos UN USING(nodo_id) WHERE UN.usuario_id=%s AND N.nodo_id=%s""",
+        """SELECT N.nodo_id, N.esp_id, UN.descripcion, UN.ubicacion FROM Nodos N JOIN UsuariosNodos UN USING(nodo_id) WHERE UN.usuario_id=%s AND N.nodo_id=%s""",
         (uid, nodo_id),
     )
     nodo = cur.fetchone()
@@ -599,7 +598,8 @@ def update_node(nodo_id):
                     return jsonify({'error': 'Ya tienes otro nodo registrado con ese ESP ID'}), 400
                 flash("Ya tienes otro nodo registrado con ese ESP ID", "danger")
                 return redirect(url_for("mis_nodos"))
-            cur.execute("UPDATE Nodos SET esp_id=%s, descripcion=%s WHERE nodo_id=%s", (nuevo_esp_id, descripcion, nodo_id))
+            cur.execute("UPDATE Nodos SET esp_id=%s WHERE nodo_id=%s", (nuevo_esp_id, nodo_id))
+            cur.execute("UPDATE UsuariosNodos SET descripcion=%s WHERE usuario_id=%s AND nodo_id=%s", (descripcion, uid, nodo_id))
             cur.execute("UPDATE UsuariosNodos SET ubicacion=%s WHERE usuario_id=%s AND nodo_id=%s", (ubicacion or None, uid, nodo_id))
             mysql.connection.commit()
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes['application/json']:
@@ -623,7 +623,7 @@ def api_nodo_latest(nodo_id):
     cur = mysql.connection.cursor()
     # Verificar acceso al nodo y obtener datos de configuración
     cur.execute(
-        "SELECT N.esp_id, N.descripcion, UN.ubicacion FROM Nodos N JOIN UsuariosNodos UN USING(nodo_id) WHERE UN.usuario_id=%s AND N.nodo_id=%s",
+        "SELECT N.esp_id, UN.descripcion, UN.ubicacion FROM Nodos N JOIN UsuariosNodos UN USING(nodo_id) WHERE UN.usuario_id=%s AND N.nodo_id=%s",
         (uid, nodo_id),
     )
     nodo = cur.fetchone()
@@ -1139,9 +1139,9 @@ def api_consumo_global():
         maximo = max(valores_validos) if valores_validos else 0
         minimo = min(valores_validos) if valores_validos else 0
         estadisticas = {
-            "total": f"{total:.2f}" if valores else "-",
-            "maximo": f"{maximo:.2f}" if valores else "-",
-            "minimo": f"{minimo:.2f}" if valores else "-"
+            "total": f"{total:.4f}" if valores else "-",
+            "maximo": f"{maximo:.4f}" if valores else "-",
+            "minimo": f"{minimo:.4f}" if valores else "-"
         }
         # Solo para consumo: potencia_media_kw
         if valores_validos:
@@ -1157,12 +1157,12 @@ def api_consumo_global():
             else:
                 duracion_horas = num_periodos  # caso por defecto
             potencia_media_kw = total / duracion_horas if duracion_horas else None
-            estadisticas["potencia_media_kw"] = f"{potencia_media_kw:.2f}" if potencia_media_kw is not None else "-"
+            estadisticas["potencia_media_kw"] = f"{potencia_media_kw:.4f}" if potencia_media_kw is not None else "-"
         
         logger.info(f"📊 Consumo por periodos: {consumo_por_periodo}")
         logger.info(f"📊 Labels: {labels}")
         logger.info(f"📊 Valores: {valores}")
-        logger.info(f"📊 Total global: {total:.2f} kWh")
+        logger.info(f"📊 Total global: {total:.4f} kWh")
         logger.info(f"📊 Estadísticas: {estadisticas}")
         
         response_data = {
@@ -1442,7 +1442,7 @@ def job_alertas_consumo():
         try:
             cur = mysql.connection.cursor()
             cur.execute("""
-                SELECT U.nodo_id, U.umbral_kw, U.estado_alerta, U.ultima_alerta, N.esp_id, N.descripcion, UN.usuario_id, USU.telegram_chat_id
+                SELECT U.nodo_id, U.umbral_kw, U.estado_alerta, U.ultima_alerta, N.esp_id, UN.descripcion, UN.usuario_id, USU.telegram_chat_id
                 FROM UmbralesNodo U
                 JOIN Nodos N ON U.nodo_id = N.nodo_id
                 JOIN UsuariosNodos UN ON UN.nodo_id = N.nodo_id
@@ -1495,7 +1495,7 @@ def job_alertas_consumo():
                         hora = now.astimezone(pytz.timezone('America/Argentina/Buenos_Aires')).strftime('%H:%M')
                         mensaje_alerta = (
                             f"⚠️ Potencia media de los últimos 15\u202Fminutos: "
-                            f"{potencia_media_kw:.2f}\u202FkW (límite {umbral_kw:.2f}\u202FkW)\n"
+                            f"{potencia_media_kw:.4f}\u202FkW (límite {umbral_kw:.4f}\u202FkW)\n"
                             f"• Nodo: {descripcion or 'Sin descripción'} (ESP {esp_id})"
                         )
                         send_telegram_alert(chat_id, mensaje_alerta)

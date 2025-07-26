@@ -95,19 +95,19 @@
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value dashboard-text" id="current-energia">-</div>
-                    <div class="metric-label dashboard-text-muted">Actual</div>
+                    <div class="metric-label dashboard-text-muted">Consumo actual (kWh)</div>
                   </div>
                 </div>
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value dashboard-text" id="max-energia">-</div>
-                    <div class="metric-label dashboard-text-muted">Máximo</div>
+                    <div class="metric-label dashboard-text-muted">Máximo (kWh)</div>
                   </div>
                 </div>
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value dashboard-text" id="min-energia">-</div>
-                    <div class="metric-label dashboard-text-muted">Mínimo</div>
+                    <div class="metric-label dashboard-text-muted">Mínimo (kWh)</div>
                   </div>
                 </div>
               </div>
@@ -158,19 +158,19 @@
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value" id="current-tension">-</div>
-                    <div class="metric-label">Actual</div>
+                    <div class="metric-label">Actual (V)</div>
                   </div>
                 </div>
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value" id="max-tension">-</div>
-                    <div class="metric-label">Máximo</div>
+                    <div class="metric-label">Máximo (V)</div>
                   </div>
                 </div>
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value" id="min-tension">-</div>
-                    <div class="metric-label">Mínimo</div>
+                    <div class="metric-label">Mínimo (V)</div>
                   </div>
                 </div>
               </div>
@@ -221,19 +221,19 @@
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value" id="current-corriente">-</div>
-                    <div class="metric-label">Actual</div>
+                    <div class="metric-label">Actual (A)</div>
                   </div>
                 </div>
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value" id="max-corriente">-</div>
-                    <div class="metric-label">Máximo</div>
+                    <div class="metric-label">Máximo (A)</div>
                   </div>
                 </div>
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value" id="min-corriente">-</div>
-                    <div class="metric-label">Mínimo</div>
+                    <div class="metric-label">Mínimo (A)</div>
                   </div>
                 </div>
               </div>
@@ -284,19 +284,19 @@
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value" id="current-fp">-</div>
-                    <div class="metric-label">Actual</div>
+                    <div class="metric-label">Actual (FP)</div>
                   </div>
                 </div>
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value" id="max-fp">-</div>
-                    <div class="metric-label">Máximo</div>
+                    <div class="metric-label">Máximo (FP)</div>
                   </div>
                 </div>
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value" id="min-fp">-</div>
-                    <div class="metric-label">Mínimo</div>
+                    <div class="metric-label">Mínimo (FP)</div>
                   </div>
                 </div>
               </div>
@@ -347,19 +347,19 @@
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value" id="current-frecuencia">-</div>
-                    <div class="metric-label">Actual</div>
+                    <div class="metric-label">Actual (Hz)</div>
                   </div>
                 </div>
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value" id="max-frecuencia">-</div>
-                    <div class="metric-label">Máximo</div>
+                    <div class="metric-label">Máximo (Hz)</div>
                   </div>
                 </div>
                 <div class="col-4">
                   <div class="metric-preview">
                     <div class="metric-value" id="min-frecuencia">-</div>
-                    <div class="metric-label">Mínimo</div>
+                    <div class="metric-label">Mínimo (Hz)</div>
                   </div>
                 </div>
               </div>
@@ -542,9 +542,9 @@ async function updateData(espId) {
           }
         }
       });
-      document.getElementById('current-energia').textContent = valores[valores.length - 1].toFixed(2);
-      document.getElementById('max-energia').textContent = Math.max(...valores).toFixed(2);
-      document.getElementById('min-energia').textContent = Math.min(...valores).toFixed(2);
+      document.getElementById('current-energia').textContent = valores[valores.length - 1].toFixed(4);
+      document.getElementById('max-energia').textContent = Math.max(...valores).toFixed(4);
+      document.getElementById('min-energia').textContent = Math.min(...valores).toFixed(4);
       
       // Actualizar estado del dispositivo para consumo
       try {

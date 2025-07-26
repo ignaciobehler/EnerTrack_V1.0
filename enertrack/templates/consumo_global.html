@@ -83,7 +83,7 @@
                             </div>
                             <div class="metric-content">
                                 <div class="metric-value dashboard-text" id="consumoTotal">-</div>
-                                <div class="metric-label dashboard-text-muted">Consumo Total</div>
+                                <div class="metric-label dashboard-text-muted">Consumo Total (kWh)</div>
                             </div>
                         </div>
                     </div>
@@ -105,7 +105,7 @@
                             </div>
                             <div class="metric-content">
                                 <div class="metric-value dashboard-text" id="consumoMaximo">-</div>
-                                <div class="metric-label dashboard-text-muted">Máximo</div>
+                                <div class="metric-label dashboard-text-muted">Máximo (kWh)</div>
                             </div>
                         </div>
                     </div>
@@ -116,7 +116,7 @@
                             </div>
                             <div class="metric-content">
                                 <div class="metric-value dashboard-text" id="consumoMinimo">-</div>
-                                <div class="metric-label dashboard-text-muted">Mínimo</div>
+                                <div class="metric-label dashboard-text-muted">Mínimo (kWh)</div>
                             </div>
                         </div>
                     </div>
@@ -314,7 +314,7 @@ function renderTable(labels, valores, unidad, pagina = 1, porPagina = 20) {
     }
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${fecha}</td><td>${hora}</td><td><strong>${valor.toFixed(2)} ${unidad}</strong></td><td><span class="${tendenciaClass}">${tendencia}</span></td>
+      <td>${fecha}</td><td>${hora}</td><td><strong>${valor.toFixed(4)} ${unidad}</strong></td><td><span class="${tendenciaClass}">${tendencia}</span></td>
     `;
     tbody.appendChild(tr);
   });
