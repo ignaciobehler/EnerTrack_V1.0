@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}EnerTrack{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Bootstrap base -->
@@ -86,6 +87,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     const themeToggle = document.getElementById('themeToggle');
     const themeIcon = themeToggle?.querySelector('i');
+
     // Función para aplicar tema
     function applyTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
@@ -99,12 +101,14 @@
         document.body.classList.add('light-theme');
       }
     }
+
     // Cargar tema guardado o usar el tema preferido del usuario
     let savedTheme = localStorage.getItem('theme');
     if (!savedTheme) {
       savedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     applyTheme(savedTheme);
+
     // Cambiar tema al hacer click
     if (themeToggle) {
       themeToggle.addEventListener('click', () => {
@@ -119,7 +123,7 @@
   {% block scripts %}{% endblock %}
 
   <!-- Footer fijo -->
-  <footer class="footer bg-dark text-light border-top mt-4" style="font-size:0.92rem; padding: 0.2rem 0; opacity:0.97;">
+  <footer class="footer footer-theme border-top mt-4" style="font-size:0.92rem; padding: 0.2rem 0; opacity:0.97;">
     <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center py-1">
       <div class="d-flex align-items-center gap-2">
         <span class="fw-semibold" style="letter-spacing:0.5px;">Ignacio Behler</span>
@@ -128,8 +132,8 @@
         <span class="text-muted" style="font-size:0.95em;">EnerTrack</span>
       </div>
       <div class="d-flex align-items-center gap-3 mt-1 mt-md-0">
-        <a href="https://mail.google.com/mail/?view=cm&to=ignaciobehler@gmail.com" target="_blank" rel="noopener" class="text-light text-decoration-none" title="Enviar correo con Gmail"><i class="bi bi-envelope"></i></a>
-        <a href="https://github.com/ignaciobehler" target="_blank" class="text-light text-decoration-none" title="GitHub"><i class="bi bi-github"></i></a>
+        <a href="https://mail.google.com/mail/?view=cm&to=ignaciobehler@gmail.com" target="_blank" rel="noopener" class="footer-link text-decoration-none" title="Enviar correo con Gmail"><i class="bi bi-envelope"></i></a>
+        <a href="https://github.com/ignaciobehler" target="_blank" class="footer-link text-decoration-none" title="GitHub"><i class="bi bi-github"></i></a>
       </div>
     </div>
   </footer>
