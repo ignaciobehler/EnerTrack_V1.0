@@ -1,0 +1,12 @@
+# MOSQUITTO PASSWORD FILE
+# Este archivo debe ser generado con el comando mosquitto_passwd
+# 
+# Para crear un nuevo archivo de passwords:
+# docker exec mosquitto mosquitto_passwd -c /mosquitto/config/passwd tu_usuario
+# 
+# Para agregar otro usuario:
+# docker exec mosquitto mosquitto_passwd /mosquitto/config/passwd otro_usuario
+#
+# Formato: usuario:hash_encriptado
+# Ejemplo:
+# mqtt_user:$7$101$abcd1234...

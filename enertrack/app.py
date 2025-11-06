@@ -60,7 +60,7 @@ influx_bucket  = os.getenv("INFLUX_BUCKET", "")
 
 # Configuración MQTT desde variables de entorno
 MQTT_DOMINIO = os.getenv("DOMINIO")
-MQTT_PORT = int(os.getenv("PUERTO_MQTTS", "8883"))
+MQTT_PORT = int(os.getenv("PUERTO_MQTTS", "23805"))
 MQTT_USER = os.getenv("MQTT_USR")
 MQTT_PASS = os.getenv("MQTT_PASS")
 
@@ -545,6 +545,12 @@ def remove_node(nodo_id):
         if not nodo:
             flash("Nodo no encontrado o sin acceso", "danger")
             return redirect(url_for("mis_nodos"))
+        # Eliminar los umbrales configurados para este usuario y nodo
+        cur.execute(
+            "DELETE FROM UmbralesNodo WHERE usuario_id=%s AND nodo_id=%s",
+            (uid, nodo_id),
+        )
+        
         # Eliminar la relación usuario-nodo
         cur.execute(
             "DELETE FROM UsuariosNodos WHERE usuario_id=%s AND nodo_id=%s",

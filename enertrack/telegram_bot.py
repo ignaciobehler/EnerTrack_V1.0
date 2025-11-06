@@ -15,8 +15,11 @@ logging.basicConfig(
 
 # Obtener el token del bot desde la variable de entorno
 TELEGRAM_TOKEN = os.environ.get('enertrackBotToken')
-# URL base de la API Flask (ajustar si es necesario)
-API_BASE_URL = os.environ.get('ENERTRACK_API_URL', 'https://ignaciobehler.duckdns.org:23405/enertrack')
+
+# URL base de la API Flask - construida dinámicamente desde variables de entorno
+DOMINIO = os.environ.get('DOMINIO', 'localhost')
+PUERTO = os.environ.get('PUERTO', '443')
+API_BASE_URL = os.environ.get('ENERTRACK_API_URL', f'https://{DOMINIO}:{PUERTO}/enertrack')
 
 # Diccionario temporal para mapear códigos de vinculación a usuario_id
 # En producción, deberías almacenar esto en la base de datos o en caché persistente

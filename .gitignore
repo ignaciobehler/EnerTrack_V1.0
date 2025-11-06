@@ -132,12 +132,20 @@ dmypy.json
 .pyre/
 
 .env
+.env.local
+.env.*.local
 
 #swag related files: ignore all except NGINX conf
 grafana/
-mosquitto/
+mosquitto/data/
+mosquitto/log/
+mosquitto/config/duckdns.ini
+mosquitto/config/passwd
 wireguard/
 mariadb/
+influxdb/data/
+influxdb/config/
+!influxdb/.gitkeep
 !swag/
 swag/*
 !swag/nginx/

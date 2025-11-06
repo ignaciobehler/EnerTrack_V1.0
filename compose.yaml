@@ -1,7 +1,111 @@
 services:
+  mariadb:
+    image: mariadb
+    container_name: mariadb
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      - TZ=America/Argentina/Buenos_Aires
+    volumes:
+      - ./mariadb:/config
+    ports:
+      - 3306:3306
+    restart: unless-stopped
+    networks:
+      - docker_iot-1_default
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    environment:
+      - PMA_HOST=mariadb
+      - PMA_ABSOLUTE_URI=https://${DOMINIO}:${PUERTO}/phpmyadmin/
+    ports:
+      - 8080:80
+    depends_on:
+      - mariadb
+    networks:
+      - docker_iot-1_default
+
+  swag:
+    image: lscr.io/linuxserver/swag:latest
+    container_name: swag
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Buenos_Aires
+      - URL=${DOMINIO}
+      - VALIDATION=dns
+      - DNSPLUGIN=duckdns
+      - SUBDOMAINS=
+    volumes:
+      - ./swag:/config
+    ports:
+      - ${PUERTO}:443/tcp
+      - 80:80
+    restart: unless-stopped
+    networks:
+      - docker_iot-1_default
+
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: mosquitto
+    user: "1000:1000"
+    ports:
+      - 1883:1883
+      - ${PUERTO_MQTTS}:8883
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto/config:/mosquitto/config
+      - ./swag/etc/letsencrypt:/var/tmp
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    depends_on:
+      - swag
+    networks:
+      - docker_iot-1_default
+
+  clientemqtt:
+    image: clientemqtt
+    container_name: clientemqtt
+    environment:
+      - TZ=America/Argentina/Buenos_Aires 
+      - SERVIDOR=${SERVIDOR}
+      - TOPICO=${TOPICO}
+      - MARIADB_SERVER=${MARIADB_SERVER}
+      - MARIADB_USER=${MARIADB_USER}
+      - MARIADB_USER_PASS=${MARIADB_USER_PASS}
+      - MARIADB_DB=${MARIADB_DB}
+      - MQTT_USR=${MQTT_USR}
+      - MQTT_PASS=${MQTT_PASS}
+      - PUERTO_MQTTS=${PUERTO_MQTTS}
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+      - mosquitto
+    networks:
+      - docker_iot-1_default
+
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - 8086:8086
+    restart: unless-stopped
+    volumes:
+      - ./influxdb/data:/var/lib/influxdb2
+      - ./influxdb/config:/etc/influxdb2
+    networks:
+      - docker_iot-1_default
+
   enertrack:
     build:
-      context: ./enertrack     # carpeta donde está tu aplicación Flask
+      context: ./enertrack
     container_name: enertrack
     environment:
       - MYSQL_USER=${MYSQL_USER}
@@ -15,13 +119,18 @@ services:
       - INFLUX_ORG=${INFLUX_ORG}
       - INFLUX_BUCKET=${INFLUX_BUCKET}
       - DOMINIO=${DOMINIO}
+      - PUERTO=${PUERTO}
       - PUERTO_MQTTS=${PUERTO_MQTTS}
       - MQTT_USR=${MQTT_USR}
       - MQTT_PASS=${MQTT_PASS}
       - enertrackBotToken=${enertrackBotToken}
     ports:
-      - "8006:8006"               # mapea el puerto 8001 al host para probar directamente si quieres
+      - "8006:8006"
     restart: unless-stopped
+    depends_on:
+      - mariadb
+      - mosquitto
+      - influxdb
     networks:
       - docker_iot-1_default
 
