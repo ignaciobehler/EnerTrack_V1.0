@@ -551,7 +551,7 @@ function applyModalTheme() {
 }
 
 function editNodo(nodoId) {
-    fetch(`/enertrack/api/nodo/${nodoId}/latest`)
+    fetch(`/api/nodo/${nodoId}/latest`)
         .then(r => r.json())
         .then(data => {
             document.getElementById('edit_esp_id').value = data.esp_id || '';

@@ -397,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function fetchAndRender() {
     const periodo = document.getElementById('periodoSelect').value;
     const fechaInput = document.getElementById('fechaInput');
-    let url = `/enertrack/api/consumo/global?periodo=${periodo}`;
+    let url = `/api/consumo/global?periodo=${periodo}`;
     if (periodo === 'hora' && fechaInput.value) {
         url += `&fecha=${fechaInput.value}`;
     }

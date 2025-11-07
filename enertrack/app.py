@@ -87,7 +87,7 @@ app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # Configurar aplicación para funcionar bajo el prefijo /enertrack
-app.config['APPLICATION_ROOT'] = '/enertrack'
+app.config['APPLICATION_ROOT'] = '/'
 
 # Inyectar el año actual en todas las plantillas
 from datetime import datetime
@@ -99,6 +99,15 @@ def inject_now():
 def before_request():
     if request.script_root != app.config['APPLICATION_ROOT']:
         request.environ['SCRIPT_NAME'] = app.config['APPLICATION_ROOT']
+
+@app.after_request
+def add_header(response):
+    """Deshabilitar caché para HTML para evitar problemas con cambios en producción"""
+    if response.content_type and 'text/html' in response.content_type:
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '-1'
+    return response
 
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret")
 app.config.update(
@@ -642,11 +651,79 @@ def api_nodo_latest(nodo_id):
     esp_id = nodo["esp_id"]
     magnitudes = ["tension", "corriente", "consumo", "fp", "frecuencia"]
     result = {"esp_id": esp_id, "descripcion": nodo["descripcion"], "ubicacion": nodo["ubicacion"]}
+    
+    from datetime import timedelta, datetime
+    import pytz
+    
     try:
-        from datetime import timedelta
         for mag in magnitudes:
-            logger.info(f"[DASHBOARDS] Consultando magnitud '{mag}' para nodo {esp_id} (usuario {uid}) en los últimos 30 minutos...")
-            flux = f'''
+            # Primero verificar si hay datos en los últimos 30 minutos para determinar estado
+            logger.info(f"[DASHBOARDS] Consultando magnitud '{mag}' para nodo {esp_id}...")
+            
+            # Consultar últimos 30 minutos para determinar estado "activo"
+            flux_30m = f'''
+                from(bucket: "{influx_bucket}")
+                  |> range(start: -30m)
+                  |> filter(fn: (r) => r["_measurement"] == "{mag}")
+                  |> filter(fn: (r) => r["esp_id"] == "{esp_id}")
+                  |> filter(fn: (r) => r["_field"] == "valor")
+                  |> sort(columns: ["_time"], desc: true)
+                  |> limit(n: 1)
+            '''
+            
+            tables_30m = list(influx_client.query_api().query(flux_30m))
+            hay_datos_30m = False
+            ultimo_tiempo_30m = None
+            
+            for table in tables_30m:
+                for record in table.records:
+                    hay_datos_30m = True
+                    utc_time = record.get_time()
+                    argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+                    ultimo_tiempo_30m = utc_time.replace(tzinfo=pytz.utc).astimezone(argentina_tz)
+                    break
+            
+            # Determinar estado inicial
+            estado_magnitud = "sin_datos"
+            ultima_actualizacion = None
+            
+            if hay_datos_30m:
+                estado_magnitud = "activo"
+                ultima_actualizacion = ultimo_tiempo_30m.isoformat()
+                logger.info(f"[DASHBOARDS] Magnitud '{mag}': ACTIVO (datos en últimos 30 min)")
+            else:
+                # Si no hay datos en 30 min, verificar si hay en las últimas 24h
+                flux_24h = f'''
+                    from(bucket: "{influx_bucket}")
+                      |> range(start: -24h)
+                      |> filter(fn: (r) => r["_measurement"] == "{mag}")
+                      |> filter(fn: (r) => r["esp_id"] == "{esp_id}")
+                      |> filter(fn: (r) => r["_field"] == "valor")
+                      |> sort(columns: ["_time"], desc: true)
+                      |> limit(n: 1)
+                '''
+                
+                tables_24h = list(influx_client.query_api().query(flux_24h))
+                hay_datos_24h = False
+                
+                for table in tables_24h:
+                    for record in table.records:
+                        hay_datos_24h = True
+                        utc_time = record.get_time()
+                        argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+                        ultimo_tiempo_24h = utc_time.replace(tzinfo=pytz.utc).astimezone(argentina_tz)
+                        ultima_actualizacion = ultimo_tiempo_24h.isoformat()
+                        break
+                
+                if hay_datos_24h:
+                    estado_magnitud = "desconectado"
+                    logger.info(f"[DASHBOARDS] Magnitud '{mag}': DESCONECTADO (datos en últimas 24h)")
+                else:
+                    estado_magnitud = "sin_datos"
+                    logger.info(f"[DASHBOARDS] Magnitud '{mag}': SIN DATOS")
+            
+            # Ahora consultar datos de los últimos 30 minutos para el gráfico (previsualización)
+            flux_30m_graf = f'''
                 from(bucket: "{influx_bucket}")
                   |> range(start: -30m)
                   |> filter(fn: (r) => r["_measurement"] == "{mag}")
@@ -654,64 +731,70 @@ def api_nodo_latest(nodo_id):
                   |> filter(fn: (r) => r["_field"] == "valor")
                   |> sort(columns: ["_time"])
             '''
-            logger.info(f"[DASHBOARDS] Query Flux 30m para {mag}: {flux}")
-            tables = list(influx_client.query_api().query(flux))
+            
+            tables_30m_graf = list(influx_client.query_api().query(flux_30m_graf))
+            datos_serie = []
             valores = []
             tiempos = []
-            for table in tables:
+            
+            for table in tables_30m_graf:
                 for record in table.records:
                     valor = record.get_value()
                     utc_time = record.get_time()
-                    local_time = utc_time - timedelta(hours=3)
+                    # Convertir a hora local de Argentina (UTC-3)
+                    argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+                    local_time = utc_time.replace(tzinfo=pytz.utc).astimezone(argentina_tz)
+                    
                     valores.append(valor)
                     tiempos.append(local_time)
-            logger.info(f"[DASHBOARDS] Magnitud '{mag}': {len(valores)} valores en 30m: {valores}")
-            # Si no hay datos en la última media hora, buscar el último dato en las últimas 24h
-            if not valores:
-                logger.info(f"[DASHBOARDS] Sin datos en 30m para '{mag}', buscando en 24h...")
-                flux_24h = f'''
-                    from(bucket: "{influx_bucket}")
-                      |> range(start: -24h)
-                      |> filter(fn: (r) => r["_measurement"] == "{mag}")
-                      |> filter(fn: (r) => r["esp_id"] == "{esp_id}")
-                      |> filter(fn: (r) => r["_field"] == "valor")
-                      |> sort(columns: ["_time"])
-                '''
-                logger.info(f"[DASHBOARDS] Query Flux 24h para {mag}: {flux_24h}")
-                tables_24h = list(influx_client.query_api().query(flux_24h))
-                for table in tables_24h:
-                    for record in table.records:
-                        valor = record.get_value()
-                        utc_time = record.get_time()
-                        local_time = utc_time - timedelta(hours=3)
-                        valores.append(valor)
-                        tiempos.append(local_time)
-                logger.info(f"[DASHBOARDS] Magnitud '{mag}': {len(valores)} valores en 24h: {valores}")
+                    datos_serie.append({
+                        "tiempo": local_time.strftime('%H:%M:%S'),
+                        "valor": valor,
+                        "timestamp": local_time.isoformat()
+                    })
+            
+            logger.info(f"[DASHBOARDS] Magnitud '{mag}': {len(valores)} valores en últimos 30 minutos, estado={estado_magnitud}")
+            
+            # Si hay datos en los últimos 30 minutos pero no teníamos actualización, usar el último dato
+            if valores and not ultima_actualizacion:
+                ultima_actualizacion = tiempos[-1].isoformat()
+            
             if valores:
-                actual = valores[-1]
-                timestamp = tiempos[-1].isoformat()
-                maximo = max(valores)
-                minimo = min(valores)
-                logger.info(f"[DASHBOARDS] Magnitud '{mag}' RESULTADO: actual={actual}, max={maximo}, min={minimo}, timestamp={timestamp}")
                 result[mag] = {
-                    "actual": actual,
-                    "max": maximo,
-                    "min": minimo,
-                    "timestamp": timestamp
+                    "actual": valores[-1],
+                    "max": max(valores),
+                    "min": min(valores),
+                    "timestamp": ultima_actualizacion,
+                    "datos": datos_serie,
+                    "estado": estado_magnitud
                 }
             else:
-                logger.warning(f"[DASHBOARDS] Magnitud '{mag}' SIN DATOS para nodo {esp_id}")
                 result[mag] = {
                     "actual": None,
                     "max": None,
                     "min": None,
-                    "timestamp": None
+                    "timestamp": ultima_actualizacion,
+                    "datos": [],
+                    "estado": estado_magnitud
                 }
-        # Añadir estado y última actualización
-        estado_info = get_nodo_estado(esp_id)
-        result["estado"] = estado_info["estado"]
-        result["ultima_actualizacion"] = estado_info["ultima_actualizacion"]
-        logger.info(f"[DASHBOARDS] FIN llamada a /api/nodo/{nodo_id}/latest → resultado: {result}")
+        
+        # Estado global del nodo (el mejor estado de todas las magnitudes)
+        estados = [result[mag].get("estado", "sin_datos") for mag in magnitudes]
+        if "activo" in estados:
+            result["estado"] = "activo"
+        elif "desconectado" in estados:
+            result["estado"] = "desconectado"
+        else:
+            result["estado"] = "sin_datos"
+        
+        # Última actualización global (la más reciente de todas las magnitudes)
+        timestamps = [result[mag].get("timestamp") for mag in magnitudes if result[mag].get("timestamp")]
+        if timestamps:
+            result["ultima_actualizacion"] = max(timestamps)
+        else:
+            result["ultima_actualizacion"] = None
+        
+        logger.info(f"[DASHBOARDS] FIN llamada a /api/nodo/{nodo_id}/latest → resultado keys: {list(result.keys())}")
         return jsonify(result)
     except Exception as e:
         logger.error(f"[DASHBOARDS] Error consultando InfluxDB para nodo {esp_id}: {e}")
@@ -900,24 +983,41 @@ def api_consumo_global():
     # Definir rango y ventana de agrupación según periodo
     if periodo == 'hora':
         # Leer parámetro de fecha (YYYY-MM-DD)
+        import pytz
+        argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+        now_local = datetime.now(argentina_tz)
+        
         fecha_str = request.args.get('fecha')
         if fecha_str:
             try:
-                fecha = datetime.strptime(fecha_str, '%Y-%m-%d')
+                # Parsear la fecha y asignarle la zona horaria de Argentina
+                fecha_naive = datetime.strptime(fecha_str, '%Y-%m-%d')
+                fecha = argentina_tz.localize(fecha_naive)
             except Exception:
-                fecha = now
+                fecha = now_local
         else:
-            fecha = now
+            fecha = now_local
+        
+        # Definir inicio y fin del día en hora local de Argentina
         inicio_dia = fecha.replace(hour=0, minute=0, second=0, microsecond=0)
         fin_dia = fecha.replace(hour=23, minute=59, second=59, microsecond=999999)
-        # Usar rango absoluto en UTC para InfluxDB
-        rango_start = inicio_dia.isoformat() + 'Z'
-        rango_stop = fin_dia.isoformat() + 'Z'
+        
+        # Convertir a UTC para la query de InfluxDB
+        inicio_dia_utc = inicio_dia.astimezone(pytz.utc)
+        fin_dia_utc = fin_dia.astimezone(pytz.utc)
+        
+        # Usar rango absoluto en UTC para InfluxDB (formato RFC3339)
+        rango_start = inicio_dia_utc.isoformat()
+        rango_stop = fin_dia_utc.isoformat()
         group = '1h'
         labels_fmt = '%H:00'
         num_periodos = 24
         periodos_labels = [f"{i:02d}:00" for i in range(24)]
         fecha_dia = fecha.strftime('%d/%m/%Y')
+        
+        logger.info(f"📊 Fecha seleccionada (local): {fecha}")
+        logger.info(f"📊 Inicio día (UTC): {inicio_dia_utc}")
+        logger.info(f"📊 Fin día (UTC): {fin_dia_utc}")
     elif periodo == 'dia':
         rango = '-7d'
         group = '1d'
@@ -1001,13 +1101,15 @@ def api_consumo_global():
             logger.info(f"📊 Tabla con {len(table.records)} registros")
             for record in table.records:
                 total_registros += 1
-                t = record.get_time()
-                # Ajustar a hora local (UTC-3 para Argentina)
-                try:
-                    from datetime import timedelta as td
-                    t = t - td(hours=3)
-                except Exception:
-                    pass
+                t_utc = record.get_time()
+                
+                # Convertir a hora local de Argentina usando pytz
+                import pytz
+                argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+                if t_utc.tzinfo is None:
+                    # Si no tiene zona horaria, asumimos que es UTC
+                    t_utc = pytz.utc.localize(t_utc)
+                t = t_utc.astimezone(argentina_tz)
                 
                 # Obtener esp_id del registro para diagnóstico
                 esp_id_record = record.values.get('esp_id', 'unknown')
@@ -1107,8 +1209,12 @@ def api_consumo_global():
                 logger.info(f"📊 Tabla individual {esp_id}: {len(table.records)} registros")
                 for record in table.records:
                     utc_time = record.get_time()
-                    from datetime import timedelta
-                    local_time = utc_time - timedelta(hours=3)
+                    # Convertir a hora local de Argentina usando pytz
+                    import pytz
+                    argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+                    if utc_time.tzinfo is None:
+                        utc_time = pytz.utc.localize(utc_time)
+                    local_time = utc_time.astimezone(argentina_tz)
                     valor = record.get_value()
                     datos_nodo.append({
                         "tiempo": local_time,
@@ -1526,7 +1632,7 @@ scheduler.start()
 logger.info('[ALERTAS] Scheduler de alertas iniciado')
 # --- FIN INTEGRACIÓN TELEGRAM ---
 
-@app.route('/enertrack/api/umbral/<int:nodo_id>', methods=['GET'])
+@app.route('/api/umbral/<int:nodo_id>', methods=['GET'])
 @require_login
 def get_umbral_nodo(nodo_id):
     uid = session['user_id']
@@ -1545,7 +1651,7 @@ def get_umbral_nodo(nodo_id):
         logger.error(f"[UMBRAL][GET] Error: {e}")
         return jsonify({'umbral_kw': None, 'error': str(e)}), 500
 
-@app.route('/enertrack/api/umbral/<int:nodo_id>', methods=['POST'], endpoint='set_umbral_nodo')
+@app.route('/api/umbral/<int:nodo_id>', methods=['POST'], endpoint='set_umbral_nodo')
 @require_login
 def set_umbral_nodo(nodo_id):
     uid = session['user_id']
@@ -1566,7 +1672,7 @@ def set_umbral_nodo(nodo_id):
         logger.error(f"[UMBRAL][POST] Error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/enertrack/api/umbral/<int:nodo_id>', methods=['DELETE'])
+@app.route('/api/umbral/<int:nodo_id>', methods=['DELETE'])
 @require_login
 def delete_umbral_nodo(nodo_id):
     uid = session['user_id']

@@ -407,7 +407,7 @@ if (document.getElementById('addNodeFormElement')) {
 
 // Auto-refresh de KPIs cada 60 segundos
 setInterval(function() {
-  fetch('/enertrack/api/kpi-global')
+  fetch('/api/kpi-global')
     .then(response => response.json())
     .then(data => {
       document.querySelectorAll('.card-text').forEach((element, index) => {

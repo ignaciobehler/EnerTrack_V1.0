@@ -384,6 +384,12 @@ function renderChart(labels, data) {
   const ctx = document.getElementById('magnitudChart').getContext('2d');
   if (chart) chart.destroy();
   const chartColors = getChartColors();
+  
+  // Si solo hay un dato, mostrar solo el punto sin línea
+  const showLine = data.length > 1;
+  const pointRadius = data.length === 1 ? 8 : 4;
+  const tension = data.length > 1 ? 0.35 : 0;
+  
   chart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -392,10 +398,11 @@ function renderChart(labels, data) {
         data: data,
         borderColor: color.border,
         backgroundColor: color.bg,
-        tension: .35,
+        tension: tension,
         fill: true,
-        pointRadius: 4,
-        pointHoverRadius: 6,
+        showLine: showLine,
+        pointRadius: pointRadius,
+        pointHoverRadius: pointRadius + 2,
         pointBackgroundColor: color.border,
         pointBorderColor: "#fff",
         pointBorderWidth: 2
@@ -532,7 +539,7 @@ function renderMetrics(estadisticas) {
 function fetchAndRender(rango) {
   console.log('Fetching data for:', magnitud, 'nodo:', nodoId, 'rango:', rango);
   
-  fetch(`/enertrack/api/nodo/${nodoId}/magnitud/${magnitud}?rango=${rango}`)
+  fetch(`/api/nodo/${nodoId}/magnitud/${magnitud}?rango=${rango}`)
     .then(r => r.json())
     .then(data => {
       if (data.datos && data.datos.length > 0) {

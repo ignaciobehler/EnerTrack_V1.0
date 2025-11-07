@@ -53,7 +53,7 @@ if (btnVincularTelegram) {
   btnVincularTelegram.addEventListener('click', function() {
     btnVincularTelegram.disabled = true;
     btnVincularTelegram.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Vinculando...';
-    fetch('/enertrack/api/telegram/generate_link_code', {method: 'POST'})
+    fetch('/api/telegram/generate_link_code', {method: 'POST'})
       .then(r => r.json())
       .then(data => {
         if (data.error) {
@@ -86,7 +86,7 @@ if (btnDesvincularTelegram) {
   btnDesvincularTelegram.addEventListener('click', function() {
     btnDesvincularTelegram.disabled = true;
     btnDesvincularTelegram.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Desvinculando...';
-    fetch('/enertrack/api/telegram/unlink', {method: 'POST'})
+    fetch('/api/telegram/unlink', {method: 'POST'})
       .then(r => r.json())
       .then(data => {
         if (data.success) {

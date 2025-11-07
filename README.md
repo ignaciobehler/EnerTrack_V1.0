@@ -401,6 +401,16 @@ Las contribuciones son bienvenidas. Por favor, abre un issue o pull request.
 
 Ignacio Behler - [GitHub](https://github.com/ignaciobehler)
 
+## 📚 Documentación Adicional
+
+Para información adicional sobre el proyecto, consulta la carpeta [`docs/`](docs/):
+
+- **[DEPLOY.md](docs/DEPLOY.md)** - Guía detallada de despliegue en producción
+- **[CONTRIBUTING.md](docs/CONTRIBUTING.md)** - Guía para contribuir al proyecto
+- **[CHECKLIST_GITHUB.md](docs/CHECKLIST_GITHUB.md)** - Checklist de tareas para GitHub
+- **[.env.example](docs/.env.example)** - Ejemplo de archivo de variables de entorno
+- **[compose.yaml.backup](docs/compose.yaml.backup)** - Backup de configuración Docker Compose
+
 ---
 
 **¿Problemas?** Abre un issue en GitHub o contacta al mantenedor.

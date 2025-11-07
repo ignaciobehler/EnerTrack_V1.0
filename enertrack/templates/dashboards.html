@@ -496,7 +496,7 @@ async function updateData(espId) {
     // Obtener datos para cada magnitud
     for (const magnitud of magnitudes) {
       try {
-        const response = await fetch(`/enertrack/api/nodo/${nodoId}/magnitud/${magnitud}?rango=60`);
+        const response = await fetch(`/api/nodo/${nodoId}/magnitud/${magnitud}?rango=60`);
         const result = await response.json();
         data[magnitud] = result.datos || [];
       } catch (error) {
@@ -548,14 +548,14 @@ async function updateData(espId) {
       
       // Actualizar estado del dispositivo para consumo
       try {
-        const response = await fetch(`/enertrack/api/nodo/${nodoId}/magnitud/consumo?rango=30`);
+        const response = await fetch(`/api/nodo/${nodoId}/magnitud/consumo?rango=30`);
         const result = await response.json();
         // Si hay datos en los últimos 30 minutos, está activo
         if (result.datos && result.datos.length > 0) {
           updateDeviceStatus('energia', true, result.ultima_fecha);
         } else {
           // Verificar si hay datos más antiguos
-          const response24h = await fetch(`/enertrack/api/nodo/${nodoId}/magnitud/consumo?rango=1440`);
+          const response24h = await fetch(`/api/nodo/${nodoId}/magnitud/consumo?rango=1440`);
           const result24h = await response24h.json();
           if (result24h.datos && result24h.datos.length > 0) {
             updateDeviceStatus('energia', true, result24h.ultima_fecha);
@@ -581,7 +581,7 @@ async function updateData(espId) {
       
       // Verificar si hay datos más antiguos para mostrar estado correcto
       try {
-        const response24h = await fetch(`/enertrack/api/nodo/${nodoId}/magnitud/consumo?rango=1440`);
+        const response24h = await fetch(`/api/nodo/${nodoId}/magnitud/consumo?rango=1440`);
         const result24h = await response24h.json();
         if (result24h.datos && result24h.datos.length > 0) {
           // Hay datos más antiguos, mostrar como desconectado
@@ -804,14 +804,14 @@ async function updateData(espId) {
       if (magnitudData && magnitudData.length > 0) {
         // Si hay datos en la última hora, verificar si son recientes (últimos 30 min)
         try {
-          const response = await fetch(`/enertrack/api/nodo/${nodoId}/magnitud/${magnitud}?rango=30`);
+          const response = await fetch(`/api/nodo/${nodoId}/magnitud/${magnitud}?rango=30`);
           const result = await response.json();
           if (result.datos && result.datos.length > 0) {
             // Datos recientes (últimos 30 min)
             updateDeviceStatus(magnitud, true, result.ultima_fecha);
           } else {
             // Datos antiguos (más de 30 min)
-            const response24h = await fetch(`/enertrack/api/nodo/${nodoId}/magnitud/${magnitud}?rango=1440`);
+            const response24h = await fetch(`/api/nodo/${nodoId}/magnitud/${magnitud}?rango=1440`);
             const result24h = await response24h.json();
             if (result24h.datos && result24h.datos.length > 0) {
               updateDeviceStatus(magnitud, true, result24h.ultima_fecha);
@@ -826,7 +826,7 @@ async function updateData(espId) {
       } else {
         // Si no hay datos en la última hora, verificar si hay datos más antiguos
         try {
-          const response = await fetch(`/enertrack/api/nodo/${nodoId}/magnitud/${magnitud}?rango=1440`); // 24 horas
+          const response = await fetch(`/api/nodo/${nodoId}/magnitud/${magnitud}?rango=1440`); // 24 horas
           const result = await response.json();
           if (result.datos && result.datos.length > 0) {
             // Hay datos más antiguos, usar la fecha real del último dato
@@ -856,7 +856,12 @@ function mostrarFeedback(msg, success=true) {
 }
 
 function cargarUmbral() {
-  fetch(`/enertrack/api/umbral/${nodoId}`)
+  // Solo ejecutar si los elementos existen (esta función puede estar en páginas sin formulario de umbral)
+  if (!ventanaMinSel || !umbralKWhInput || !btnEliminarUmbral) {
+    return;
+  }
+  
+  fetch(`/api/umbral/${nodoId}`)
     .then(r => r.json())
     .then(data => {
       if (data.ventana_min && data.umbral_kWh) {
@@ -868,6 +873,9 @@ function cargarUmbral() {
         umbralKWhInput.value = '';
         btnEliminarUmbral.style.display = 'none';
       }
+    })
+    .catch(err => {
+      console.log('Error cargando umbral (puede ser normal si no está en la página correcta):', err);
     });
 }
 
@@ -883,7 +891,7 @@ if (umbralForm) {
     e.preventDefault();
     const ventana_min = ventanaMinSel.value;
     const umbral_kWh = umbralKWhInput.value;
-    fetch(`/enertrack/api/umbral/${nodoId}`, {
+    fetch(`/api/umbral/${nodoId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ventana_min, umbral_kWh })
@@ -904,7 +912,7 @@ if (umbralForm) {
 if (btnEliminarUmbral) {
   btnEliminarUmbral.addEventListener('click', function() {
     if (!confirm('¿Eliminar el umbral de este nodo?')) return;
-    fetch(`/enertrack/api/umbral/${nodoId}`, { method: 'DELETE' })
+    fetch(`/api/umbral/${nodoId}`, { method: 'DELETE' })
       .then(r => r.json())
       .then(data => {
         if (data.success) {
@@ -936,67 +944,155 @@ document.addEventListener('DOMContentLoaded', async () => {
       { key: 'frecuencia', label: 'Frecuencia (Hz)', color: '#0dcaf0', bg: 'rgba(13,202,240,0.1)', chart: 'preview-frecuencia', estado: 'estado-frecuencia', last: 'last-update-frecuencia', current: 'current-frecuencia', max: 'max-frecuencia', min: 'min-frecuencia' }
     ];
     for (const mag of magnitudes) {
-      // Estado y última actualización (todos usan el mismo estado/ultima_actualizacion del nodo)
+      const magData = data[mag.key];
       const statusElement = document.getElementById(mag.estado);
       const lastUpdateElement = document.getElementById(mag.last);
-      if (data.estado === 'activo') {
+      
+      // Estado individual por magnitud
+      if (magData && magData.estado === 'activo') {
         statusElement.textContent = 'Activo';
         statusElement.style.background = '#28a745';
         statusElement.style.color = '#fff';
-        lastUpdateElement.innerHTML = `<i class=\"fas fa-clock me-1\"></i> Última actualización: ${data.ultima_actualizacion ? new Date(data.ultima_actualizacion).toLocaleString('es-ES') : '-'}`;
-      } else if (data.estado === 'desconectado') {
+        lastUpdateElement.innerHTML = `<i class=\"fas fa-clock me-1\"></i> Última actualización: ${magData.timestamp ? new Date(magData.timestamp).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }) : '-'}`;
+      } else if (magData && magData.estado === 'desconectado') {
         statusElement.textContent = 'Desconectado';
         statusElement.style.background = '#dc3545';
         statusElement.style.color = '#fff';
-        lastUpdateElement.innerHTML = `<i class=\"fas fa-clock me-1\"></i> Última actualización: ${data.ultima_actualizacion ? new Date(data.ultima_actualizacion).toLocaleString('es-ES') : '-'}`;
+        lastUpdateElement.innerHTML = `<i class=\"fas fa-clock me-1\"></i> Última actualización: ${magData.timestamp ? new Date(magData.timestamp).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }) : '-'}`;
       } else {
         statusElement.textContent = 'Sin datos';
         statusElement.style.background = '#6c757d';
         statusElement.style.color = '#fff';
         lastUpdateElement.innerHTML = `<i class=\"fas fa-clock me-1\"></i> Última actualización: Sin datos`;
       }
-      // Mini-vista previa: solo un valor, duplicar el punto
+      
+      // Serie de datos para el gráfico (últimos 30 minutos desde AHORA)
       let serie = [];
-      if (data[mag.key] && data[mag.key].actual !== null && data[mag.key].timestamp) {
-        serie = [{x: new Date(data[mag.key].timestamp), y: data[mag.key].actual}];
+      if (magData && magData.datos && magData.datos.length > 0) {
+        const ahora = new Date();
+        const hace30Minutos = new Date(ahora.getTime() - (30 * 60 * 1000)); // 30 minutos en milisegundos
+        
+        console.log(`[${mag.key}] Ahora: ${ahora.toISOString()}, Hace 30 min: ${hace30Minutos.toISOString()}`);
+        
+        // Filtrar solo datos de los últimos 30 minutos
+        const serieCompleta = magData.datos.map(d => {
+          const fecha = new Date(d.timestamp);
+          console.log(`[${mag.key}] Dato: timestamp=${d.timestamp}, fecha=${fecha.toISOString()}, valor=${d.valor}, tiempo diff=${(ahora - fecha) / 1000 / 60} minutos`);
+          return {
+            x: fecha,
+            y: d.valor,
+            timestamp: d.timestamp
+          };
+        });
+        
+        serie = serieCompleta.filter(punto => {
+          const diffMinutos = (ahora - punto.x) / 1000 / 60;
+          const esReciente = diffMinutos <= 30;
+          console.log(`[${mag.key}] Filtro: diff=${diffMinutos.toFixed(2)} min, esReciente=${esReciente}`);
+          return esReciente;
+        });
+        
+        console.log(`[${mag.key}] Total datos recibidos: ${magData.datos.length}, Datos en últimos 30 min: ${serie.length}`);
+        
+        // Si después del filtrado no hay datos recientes, actualizar estado a "Sin datos"
+        if (serie.length === 0) {
+          statusElement.textContent = 'Sin datos';
+          statusElement.style.background = '#6c757d';
+          statusElement.style.color = '#fff';
+          lastUpdateElement.innerHTML = `<i class="fas fa-clock me-1"></i> Última actualización: Sin datos recientes`;
+        }
       }
-      if (serie.length === 1) {
-        const p = serie[0];
-        serie.push({x: new Date(new Date(p.x).getTime() + 1000), y: p.y});
-      }
+      
+      // Configuración del chart según cantidad de datos
+      const showLine = serie.length > 1;
+      const pointRadius = serie.length <= 3 ? 8 : 3;  // Puntos más grandes si hay pocos datos
+      const borderWidth = serie.length === 1 ? 0 : 2;  // Sin línea si solo hay 1 punto
+      
       if (serie.length > 0) {
-        const ctx = document.getElementById(mag.chart).getContext('2d');
+        const canvasElement = document.getElementById(mag.chart);
+        const ctx = canvasElement.getContext('2d');
+        
+        // Destruir chart anterior si existe para evitar error "Canvas is already in use"
+        const existingChart = Chart.getChart(canvasElement);
+        if (existingChart) {
+          existingChart.destroy();
+        }
+        
         new Chart(ctx, {
           type: 'line',
           data: {
-            labels: serie.map(p => p.x.toLocaleTimeString('es-ES')),
+            labels: serie.map(p => p.x.toLocaleTimeString('es-AR', {hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'America/Argentina/Buenos_Aires'})),
             datasets: [{
+              label: mag.label,
               data: serie.map(p => p.y),
               borderColor: mag.color,
               backgroundColor: mag.bg,
               tension: 0.35,
-              fill: true,
-              pointRadius: 2
+              fill: serie.length > 1,  // Solo rellenar si hay más de un punto
+              showLine: showLine,
+              pointRadius: pointRadius,
+              pointHoverRadius: pointRadius + 3,
+              pointBackgroundColor: mag.color,
+              pointBorderColor: "#fff",
+              pointBorderWidth: 2,
+              borderWidth: borderWidth
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            plugins: { 
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: function(context) {
+                    return context[0].label;
+                  },
+                  label: function(context) {
+                    return mag.label + ': ' + context.parsed.y.toFixed(4);
+                  }
+                }
+              }
+            },
             scales: {
-              y: { title: { display: true, text: mag.label }, grid: { color: getChartColors().grid }, ticks: { color: getChartColors().axis } },
-              x: { grid: { color: getChartColors().grid }, ticks: { color: getChartColors().axis } }
+              y: { 
+                title: { display: true, text: mag.label }, 
+                grid: { color: getChartColors().grid }, 
+                ticks: { color: getChartColors().axis }
+              },
+              x: { 
+                grid: { color: getChartColors().grid }, 
+                ticks: { 
+                  color: getChartColors().axis,
+                  maxRotation: 45,
+                  minRotation: 0
+                }
+              }
             }
           }
         });
         // Actual, máximo, mínimo
-        document.getElementById(mag.current).textContent = data[mag.key].actual !== null ? data[mag.key].actual.toFixed(2) : '-';
-        document.getElementById(mag.max).textContent = data[mag.key].max !== null ? data[mag.key].max.toFixed(2) : '-';
-        document.getElementById(mag.min).textContent = data[mag.key].min !== null ? data[mag.key].min.toFixed(2) : '-';
+        const decimales = mag.key === 'consumo' ? 4 : 2;
+        document.getElementById(mag.current).textContent = magData.actual !== null ? magData.actual.toFixed(decimales) : '-';
+        document.getElementById(mag.max).textContent = magData.max !== null ? magData.max.toFixed(decimales) : '-';
+        document.getElementById(mag.min).textContent = data[mag.key].min !== null ? data[mag.key].min.toFixed(decimales) : '-';
       } else {
+        // No hay datos recientes - limpiar valores y destruir gráfico anterior
         document.getElementById(mag.current).textContent = '-';
         document.getElementById(mag.max).textContent = '-';
         document.getElementById(mag.min).textContent = '-';
+        
+        // Destruir el gráfico anterior si existe
+        const canvasElement = document.getElementById(mag.chart);
+        if (canvasElement) {
+          const existingChart = Chart.getChart(canvasElement);
+          if (existingChart) {
+            existingChart.destroy();
+          }
+          // Limpiar el canvas
+          const ctx = canvasElement.getContext('2d');
+          ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        }
       }
     }
   } catch (e) { /* fallback: no datos */ }

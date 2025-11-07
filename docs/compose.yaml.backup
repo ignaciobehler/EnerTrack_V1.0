@@ -21,8 +21,7 @@ services:
     restart: always
     environment:
       - PMA_HOST=mariadb
-      - PMA_ABSOLUTE_URI=https://${DOMINIO}/phpmyadmin/
-      - TZ=America/Argentina/Buenos_Aires
+      - PMA_ABSOLUTE_URI=https://${DOMINIO}:${PUERTO}/phpmyadmin/
     ports:
       - 8080:80
     depends_on:
@@ -42,11 +41,9 @@ services:
       - URL=${DOMINIO}
       - VALIDATION=dns
       - DNSPLUGIN=duckdns
-      - DUCKDNSTOKEN=2d71f284-0778-4059-a1a8-7579170b3bdb
       - SUBDOMAINS=
     volumes:
       - ./swag:/config
-      - ./mosquitto/config/duckdns.ini:/config/dns-conf/duckdns.ini
     ports:
       - ${PUERTO}:443/tcp
       - 80:80
@@ -58,8 +55,6 @@ services:
     image: eclipse-mosquitto
     container_name: mosquitto
     user: "1000:1000"
-    environment:
-      - TZ=America/Argentina/Buenos_Aires
     ports:
       - 1883:1883
       - ${PUERTO_MQTTS}:8883
@@ -75,11 +70,30 @@ services:
     networks:
       - docker_iot-1_default
 
+  clientemqtt:
+    image: clientemqtt
+    container_name: clientemqtt
+    environment:
+      - TZ=America/Argentina/Buenos_Aires 
+      - SERVIDOR=${SERVIDOR}
+      - TOPICO=${TOPICO}
+      - MARIADB_SERVER=${MARIADB_SERVER}
+      - MARIADB_USER=${MARIADB_USER}
+      - MARIADB_USER_PASS=${MARIADB_USER_PASS}
+      - MARIADB_DB=${MARIADB_DB}
+      - MQTT_USR=${MQTT_USR}
+      - MQTT_PASS=${MQTT_PASS}
+      - PUERTO_MQTTS=${PUERTO_MQTTS}
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+      - mosquitto
+    networks:
+      - docker_iot-1_default
+
   influxdb:
     image: influxdb:latest
     container_name: influxdb
-    environment:
-      - TZ=America/Argentina/Buenos_Aires
     ports:
       - 8086:8086
     restart: unless-stopped
@@ -94,7 +108,6 @@ services:
       context: ./enertrack
     container_name: enertrack
     environment:
-      - TZ=America/Argentina/Buenos_Aires
       - MYSQL_USER=${MYSQL_USER}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_DB=${MYSQL_DB}
@@ -126,3 +139,4 @@ volumes:
 
 networks:
   docker_iot-1_default:
+    external: true
