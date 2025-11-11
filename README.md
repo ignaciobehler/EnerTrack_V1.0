@@ -1,252 +1,502 @@
-# ⚡ EnerTrack# 🔋 ENERTRACK - Plataforma de Monitoreo Energético
+# EnerTrack# ⚡ EnerTrack# 🔋 ENERTRACK - Plataforma de Monitoreo Energético
 
 
 
-<div align="center">Plataforma web completa para monitorear y analizar el consumo eléctrico en tiempo real mediante medidores inteligentes basados en ESP32.
+Sistema IoT de Monitoreo Energético en Tiempo Real con ESP32, MQTT, InfluxDB y alertas por Telegram.
 
 
 
-![EnerTrack Logo](https://img.shields.io/badge/EnerTrack-IoT%20Energy%20Monitor-blue?style=for-the-badge)## 📋 Características
+## Descripción<div align="center">Plataforma web completa para monitorear y analizar el consumo eléctrico en tiempo real mediante medidores inteligentes basados en ESP32.
 
 
 
-**Sistema IoT de Monitoreo Energético con ESP32, MQTT, InfluxDB y Alertas por Telegram**- ✅ Gestión de usuarios y nodos ESP32
+EnerTrack permite monitorear el consumo eléctrico de múltiples dispositivos en tiempo real, visualizar datos históricos, configurar alertas personalizadas y analizar patrones de consumo desde una interfaz web moderna.
 
-- ✅ Monitoreo en tiempo real vía MQTT/MQTTS
 
-[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)- ✅ Dashboards interactivos con Chart.js
 
-[![Python](https://img.shields.io/badge/python-3.11-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)- ✅ Base de datos relacional (MariaDB) y series temporales (InfluxDB)
+## Características Principales![EnerTrack Logo](https://img.shields.io/badge/EnerTrack-IoT%20Energy%20Monitor-blue?style=for-the-badge)## 📋 Características
 
-[![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)- ✅ Alertas automáticas por Telegram
 
-[![License](https://img.shields.io/github/license/ignaciobehler/enertrack?style=for-the-badge)](LICENSE)- ✅ Análisis de consumo por hora/día/mes/año
 
-- ✅ Tema claro/oscuro
+- Dashboard web interactivo con visualización en tiempo real
+
+- Gráficos históricos por hora, día, mes y año
+
+- Alertas por Telegram cuando se superan umbrales de consumo**Sistema IoT de Monitoreo Energético con ESP32, MQTT, InfluxDB y Alertas por Telegram**- ✅ Gestión de usuarios y nodos ESP32
+
+- Soporte para múltiples nodos ESP32 simultáneos
+
+- Comunicación MQTT segura con SSL/TLS- ✅ Monitoreo en tiempo real vía MQTT/MQTTS
+
+- Gestión multiusuario con nodos compartibles
+
+- Interfaz responsive compatible con móviles[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)- ✅ Dashboards interactivos con Chart.js
+
+
+
+## Tecnologías[![Python](https://img.shields.io/badge/python-3.11-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)- ✅ Base de datos relacional (MariaDB) y series temporales (InfluxDB)
+
+
+
+- **Backend**: Python 3.11 + Flask + Gunicorn[![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)- ✅ Alertas automáticas por Telegram
+
+- **Frontend**: HTML5 + Bootstrap 5 + Chart.js
+
+- **Bases de Datos**: MariaDB (relacional) + InfluxDB (series temporales)[![License](https://img.shields.io/github/license/ignaciobehler/enertrack?style=for-the-badge)](LICENSE)- ✅ Análisis de consumo por hora/día/mes/año
+
+- **IoT**: ESP32 + MQTT (Mosquitto)
+
+- **Proxy/SSL**: SWAG (Nginx + Let's Encrypt)- ✅ Tema claro/oscuro
+
+- **Contenedores**: Docker + Docker Compose
 
 [Características](#-características) •- ✅ Proxy inverso con SSL (Let's Encrypt)
 
+## Arquitectura
+
 [Arquitectura](#-arquitectura) •
-
-[Instalación](#-instalación-rápida) •## 🏗️ Arquitectura
-
-[Documentación](#-documentación) •
-
-[Contribuir](#-contribuir)```
-
-┌─────────────┐
-
-</div>│   ESP32     │──MQTT──┐
-
-│  Medidores  │        │
-
----└─────────────┘        │
-
-                       ▼
-
-## 📖 Descripción┌──────────────────────────────────────────┐
-
-│           Mosquitto (MQTT Broker)        │
-
-EnerTrack es un sistema completo de monitoreo energético en tiempo real que combina hardware IoT (ESP32) con una plataforma web moderna. Permite monitorear múltiples nodos de medición de energía, visualizar datos históricos, recibir alertas por Telegram cuando se superan umbrales configurables, y analizar patrones de consumo.│              Puerto 1883/8883            │
-
-└──────────────────────────────────────────┘
-
-### 🎯 Casos de Uso                       │
-
-                       ▼
-
-- 🏠 **Hogares**: Monitoreo de consumo eléctrico por habitación o electrodoméstico┌──────────────────────────────────────────┐
-
-- 🏭 **Industria**: Control de consumo energético en líneas de producción│         EnerTrack (Flask App)            │
-
-- 🏢 **Edificios Comerciales**: Gestión de energía en instalaciones múltiples│              Puerto 8006                 │
-
-- 🌱 **Energías Renovables**: Seguimiento de generación solar/eólica│  ┌────────────┐  ┌─────────────────┐   │
-
-- 📊 **Análisis de Eficiencia**: Identificación de picos de consumo y optimización│  │ Telegram   │  │  Worker MQTT    │   │
-
-│  │    Bot     │  │  → InfluxDB     │   │
-
-## ✨ Características│  └────────────┘  └─────────────────┘   │
-
-└──────────────────────────────────────────┘
-
-### 🖥️ **Dashboard Web Interactivo**         │                    │
-
-- 📊 Visualización en tiempo real de magnitudes eléctricas (tensión, corriente, potencia, factor de potencia, frecuencia)         ▼                    ▼
-
-- 📈 Gráficos históricos con diferentes períodos (hora, día, mes, año)┌───────────────┐    ┌───────────────┐
-
-- 🎨 Interface moderna y responsiva con Bootstrap 5│    MariaDB    │    │   InfluxDB    │
-
-- 🌓 Indicadores de estado en tiempo real (activo/desconectado/sin datos)│ (Relacional)  │    │ (Time Series) │
-
-- 📱 Compatible con dispositivos móviles│  Puerto 3306  │    │  Puerto 8086  │
-
-└───────────────┘    └───────────────┘
-
-### 🔔 **Sistema de Alertas**         │
-
-- 📲 Notificaciones por Telegram cuando se superan umbrales de consumo         ▼
-
-- ⚙️ Configuración personalizada de umbrales por nodo┌──────────────────────────────────────────┐
-
-- 🔄 Sistema de histéresis para evitar spam de alertas│              PHPMyAdmin                  │
-
-- ⏰ Verificación cada 5 minutos con ventana de 15 minutos│              Puerto 8080                 │
-
-└──────────────────────────────────────────┘
-
-### 📡 **Conectividad IoT**```
-
-- 🔒 MQTT con SSL/TLS (MQTTS) para comunicación segura
-
-- 🌐 Certificados automáticos con Let's Encrypt vía DuckDNS## 🚀 Despliegue Rápido
-
-- 📶 Soporte para múltiples nodos ESP32 simultáneos
-
-- 🔌 Protocolo MQTT ligero y eficiente### Requisitos Previos
-
-
-
-### 💾 **Almacenamiento Robusto**- Docker y Docker Compose instalados
-
-- ⏱️ InfluxDB para series temporales (datos de sensores)- Dominio configurado (DuckDNS recomendado)
-
-- 🗄️ MariaDB para datos de usuarios y configuración- **Puertos necesarios** (recomendados para VPS con IP pública):
-
-- 📦 Retención configurable de datos históricos  - `80` (HTTP) y `443` (HTTPS)
-
-- 🔍 Consultas optimizadas para gráficos en tiempo real  - `1883` (MQTT) y `8883` (MQTTS con SSL)
-
-  - `3306` (MariaDB), `8080` (PHPMyAdmin), `8086` (InfluxDB), `8006` (Flask)
-
-### 🔐 **Seguridad**
-
-- 🔑 Autenticación de usuarios con hash de contraseñas (Scrypt)> **💡 Nota**: Si tu VPS tiene restricciones de red, puedes usar puertos alternativos. 
-
-- 🛡️ Variables de entorno para secretos> Ver [DEPLOY.md](DEPLOY.md) para configuración detallada de puertos personalizados.
-
-- 🔒 Comunicación HTTPS/TLS en todos los servicios
-
-- 👥 Gestión multiusuario con nodos compartibles### Pasos de Instalación
-
-
-
-## 🏗️ Arquitectura#### 1. Clonar el repositorio
-
-
-
-``````bash
-
-┌─────────────────────────────────────────────────────────────────┐git clone https://github.com/tuusuario/enertrack.git
-
-│                          INTERNET                               │cd enertrack
-
-└─────────────────┬───────────────────────────┬───────────────────┘```
-
-                  │                           │
-
-         ┌────────▼────────┐         ┌────────▼────────┐#### 2. Configurar variables de entorno
-
-         │   DuckDNS DNS   │         │  Telegram API   │
-
-         └────────┬────────┘         └────────▲────────┘```bash
-
-                  │                           │cp .env.example .env
-
-         ┌────────▼──────────────────────────┴────────┐nano .env
-
-         │            SWAG (Nginx + SSL)              │```
-
-         │        Let's Encrypt + Reverse Proxy       │
-
-         └────────┬───────────────────────────────────┘Configura las siguientes variables críticas:
-
-                  │
-
-    ┌─────────────┼─────────────────────────┐```bash
-
-    │             │                         │# MariaDB
-
-┌───▼────┐ ┌──────▼──────┐ ┌───────▼───────────┐MARIADB_ROOT_PASSWORD=tu_password_seguro
-
-│ ESP32  │ │  EnerTrack  │ │  PHPMyAdmin       │MYSQL_USER=medidor_user
-
-│ Nodos  │ │  Flask App  │ │                   │MYSQL_PASSWORD=tu_mysql_password
-
-│        │ │             │ │                   │MYSQL_DB=medidoresEnergia
-
-│ MQTT   │ │  Dashboards │ │  DB Management    │
-
-│ Pub    │ │  API REST   │ │                   │# InfluxDB (generado al primer inicio)
-
-└───┬────┘ │  Telegram   │ └─────────┬─────────┘INFLUX_URL=http://influxdb:8086
-
-    │      │  Bot        │           │INFLUX_TOKEN=tu_token_de_influx
-
-    │      └──────┬──────┘           │INFLUX_ORG=IoT
-
-    │             │                  │INFLUX_BUCKET=medidoresEnergia
-
-    │    ┌────────┼──────────────────┼──────────┐
-
-    │    │        │                  │          │# MQTT
-
-┌───▼────▼───┐ ┌──▼──────┐ ┌────────▼────┐ ┌───▼──────┐DOMINIO=tu_dominio.duckdns.org
-
-│  Mosquitto │ │ InfluxDB│ │  MariaDB    │ │ MariaDB  │MQTT_USR=tu_usuario_mqtt
-
-│  MQTT      │ │ Series  │ │  Users/     │ │          │MQTT_PASS=tu_password_mqtt
-
-│  Broker    │ │ Time DB │ │  Nodes      │ │          │PUERTO=443              # Puerto HTTPS (usa 443 si tienes IP pública)
-
-└────────────┘ └─────────┘ └─────────────┘ └──────────┘PUERTO_MQTTS=8883       # Puerto MQTT con SSL (8883 es el estándar)
 
 ```
 
-# Flask
+ESP32 Nodos → MQTT (SSL) → Mosquitto Broker[Instalación](#-instalación-rápida) •## 🏗️ Arquitectura
 
-### 🐳 Servicios DockerFLASK_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+                              ↓
 
-FERNET_KEY=$(python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+                         InfluxDB (datos)[Documentación](#-documentación) •
+
+                              ↓
+
+                     Flask App ← MariaDB (usuarios)[Contribuir](#-contribuir)```
+
+                         ↓         ↓
+
+                    Dashboard   Telegram Bot┌─────────────┐
+
+                         ↓
+
+                    SWAG (SSL)</div>│   ESP32     │──MQTT──┐
+
+                         ↓
+
+                      Internet│  Medidores  │        │
+
+```
+
+---└─────────────┘        │
+
+## Instalación Rápida
+
+                       ▼
+
+### Requisitos Previos
+
+## 📖 Descripción┌──────────────────────────────────────────┐
+
+- Docker y Docker Compose instalados
+
+- Dominio DuckDNS (gratuito)│           Mosquitto (MQTT Broker)        │
+
+- Bot de Telegram (@BotFather)
+
+EnerTrack es un sistema completo de monitoreo energético en tiempo real que combina hardware IoT (ESP32) con una plataforma web moderna. Permite monitorear múltiples nodos de medición de energía, visualizar datos históricos, recibir alertas por Telegram cuando se superan umbrales configurables, y analizar patrones de consumo.│              Puerto 1883/8883            │
+
+### Pasos de Instalación
+
+└──────────────────────────────────────────┘
+
+**1. Clonar el repositorio**
+
+### 🎯 Casos de Uso                       │
+
+```bash
+
+git clone https://github.com/ignaciobehler/EnerTrack_V1.0.git                       ▼
+
+cd EnerTrack_V1.0
+
+```- 🏠 **Hogares**: Monitoreo de consumo eléctrico por habitación o electrodoméstico┌──────────────────────────────────────────┐
+
+
+
+**2. Configurar variables de entorno**- 🏭 **Industria**: Control de consumo energético en líneas de producción│         EnerTrack (Flask App)            │
+
+
+
+```bash- 🏢 **Edificios Comerciales**: Gestión de energía en instalaciones múltiples│              Puerto 8006                 │
+
+cp .env.example .env
+
+nano .env- 🌱 **Energías Renovables**: Seguimiento de generación solar/eólica│  ┌────────────┐  ┌─────────────────┐   │
+
+```
+
+- 📊 **Análisis de Eficiencia**: Identificación de picos de consumo y optimización│  │ Telegram   │  │  Worker MQTT    │   │
+
+Edita las siguientes variables:
+
+│  │    Bot     │  │  → InfluxDB     │   │
+
+```bash
+
+MARIADB_ROOT_PASSWORD=tu_password_seguro## ✨ Características│  └────────────┘  └─────────────────┘   │
+
+MYSQL_PASSWORD=tu_mysql_password
+
+INFLUX_TOKEN=tu_token_influxdb└──────────────────────────────────────────┘
+
+DOMINIO=tu_subdominio.duckdns.org
+
+enertrackBotToken=tu_token_bot_telegram### 🖥️ **Dashboard Web Interactivo**         │                    │
+
+```
+
+- 📊 Visualización en tiempo real de magnitudes eléctricas (tensión, corriente, potencia, factor de potencia, frecuencia)         ▼                    ▼
+
+**3. Generar claves secretas**
+
+- 📈 Gráficos históricos con diferentes períodos (hora, día, mes, año)┌───────────────┐    ┌───────────────┐
+
+```bash
+
+python3 generate_keys.py- 🎨 Interface moderna y responsiva con Bootstrap 5│    MariaDB    │    │   InfluxDB    │
+
+```
+
+- 🌓 Indicadores de estado en tiempo real (activo/desconectado/sin datos)│ (Relacional)  │    │ (Time Series) │
+
+Copia las claves generadas en tu archivo `.env`.
+
+- 📱 Compatible con dispositivos móviles│  Puerto 3306  │    │  Puerto 8086  │
+
+**4. Configurar DuckDNS**
+
+└───────────────┘    └───────────────┘
+
+Edita `mosquitto/config/duckdns.ini`:
+
+### 🔔 **Sistema de Alertas**         │
+
+```ini
+
+dns_duckdns_token=tu_token_duckdns- 📲 Notificaciones por Telegram cuando se superan umbrales de consumo         ▼
+
+```
+
+- ⚙️ Configuración personalizada de umbrales por nodo┌──────────────────────────────────────────┐
+
+**5. Inicializar base de datos**
+
+- 🔄 Sistema de histéresis para evitar spam de alertas│              PHPMyAdmin                  │
+
+```bash
+
+docker network create docker_iot-1_default- ⏰ Verificación cada 5 minutos con ventana de 15 minutos│              Puerto 8080                 │
+
+docker compose up -d mariadb
+
+sleep 10└──────────────────────────────────────────┘
+
+docker exec -i mariadb mariadb -u root -p${MARIADB_ROOT_PASSWORD} < schema.sql
+
+```### 📡 **Conectividad IoT**```
+
+
+
+**6. Iniciar todos los servicios**- 🔒 MQTT con SSL/TLS (MQTTS) para comunicación segura
+
+
+
+```bash- 🌐 Certificados automáticos con Let's Encrypt vía DuckDNS## 🚀 Despliegue Rápido
+
+docker compose up -d
+
+```- 📶 Soporte para múltiples nodos ESP32 simultáneos
+
+
+
+**7. Verificar estado**- 🔌 Protocolo MQTT ligero y eficiente### Requisitos Previos
+
+
+
+```bash
+
+docker compose ps
+
+docker compose logs -f enertrack### 💾 **Almacenamiento Robusto**- Docker y Docker Compose instalados
+
+```
+
+- ⏱️ InfluxDB para series temporales (datos de sensores)- Dominio configurado (DuckDNS recomendado)
+
+**8. Acceder a la aplicación**
+
+- 🗄️ MariaDB para datos de usuarios y configuración- **Puertos necesarios** (recomendados para VPS con IP pública):
+
+Abre tu navegador en: `https://tu_dominio.duckdns.org`
+
+- 📦 Retención configurable de datos históricos  - `80` (HTTP) y `443` (HTTPS)
+
+## Configuración de InfluxDB
+
+- 🔍 Consultas optimizadas para gráficos en tiempo real  - `1883` (MQTT) y `8883` (MQTTS con SSL)
+
+1. Accede a `http://localhost:8086`
+
+2. Crea una organización: `IoT`  - `3306` (MariaDB), `8080` (PHPMyAdmin), `8086` (InfluxDB), `8006` (Flask)
+
+3. Crea un bucket: `medidoresEnergia`
+
+4. Genera un token de API### 🔐 **Seguridad**
+
+5. Copia el token a `.env` como `INFLUX_TOKEN`
+
+- 🔑 Autenticación de usuarios con hash de contraseñas (Scrypt)> **💡 Nota**: Si tu VPS tiene restricciones de red, puedes usar puertos alternativos. 
+
+## Configuración del Bot de Telegram
+
+- 🛡️ Variables de entorno para secretos> Ver [DEPLOY.md](DEPLOY.md) para configuración detallada de puertos personalizados.
+
+1. Habla con @BotFather en Telegram
+
+2. Crea un nuevo bot: `/newbot`- 🔒 Comunicación HTTPS/TLS en todos los servicios
+
+3. Copia el token a `.env` como `enertrackBotToken`
+
+4. Configura comandos: `/setcommands`- 👥 Gestión multiusuario con nodos compartibles### Pasos de Instalación
+
+   - `help - Ayuda y descripción del bot`
+
+
+
+## Configuración de ESP32
+
+## 🏗️ Arquitectura#### 1. Clonar el repositorio
+
+Ejemplo de código para Arduino:
+
+
+
+```cpp
+
+const char* mqtt_server = "tu_dominio.duckdns.org";``````bash
+
+const int mqtt_port = 8883;  // MQTTS con SSL
+
+const char* mqtt_user = "enertrack_mqtt";┌─────────────────────────────────────────────────────────────────┐git clone https://github.com/tuusuario/enertrack.git
+
+const char* mqtt_password = "tu_password_mqtt";
+
+│                          INTERNET                               │cd enertrack
+
+// Topics para publicar mediciones
+
+// enertrack/{ESP_ID}/tension└─────────────────┬───────────────────────────┬───────────────────┘```
+
+// enertrack/{ESP_ID}/corriente
+
+// enertrack/{ESP_ID}/consumo                  │                           │
+
+// enertrack/{ESP_ID}/fp
+
+// enertrack/{ESP_ID}/frecuencia         ┌────────▼────────┐         ┌────────▼────────┐#### 2. Configurar variables de entorno
+
+```
+
+         │   DuckDNS DNS   │         │  Telegram API   │
+
+## Uso
+
+         └────────┬────────┘         └────────▲────────┘```bash
+
+### Registro y Login
+
+                  │                           │cp .env.example .env
+
+1. Accede a la aplicación web
+
+2. Crea una cuenta nueva         ┌────────▼──────────────────────────┴────────┐nano .env
+
+3. Inicia sesión
+
+         │            SWAG (Nginx + SSL)              │```
+
+### Agregar Nodos
+
+         │        Let's Encrypt + Reverse Proxy       │
+
+1. Ve a "Mis Nodos"
+
+2. Click en "Agregar Nodo"         └────────┬───────────────────────────────────┘Configura las siguientes variables críticas:
+
+3. Ingresa el ESP_ID de tu dispositivo
+
+4. Asigna descripción y ubicación                  │
+
+
+
+### Configurar Alertas    ┌─────────────┼─────────────────────────┐```bash
+
+
+
+1. Ve a "Mis Nodos"    │             │                         │# MariaDB
+
+2. Click en "Configurar Umbral"
+
+3. Establece el límite de potencia en kW┌───▼────┐ ┌──────▼──────┐ ┌───────▼───────────┐MARIADB_ROOT_PASSWORD=tu_password_seguro
+
+4. Vincula tu cuenta de Telegram
+
+5. Recibirás alertas cuando se supere el umbral│ ESP32  │ │  EnerTrack  │ │  PHPMyAdmin       │MYSQL_USER=medidor_user
+
+
+
+## Estructura del Proyecto│ Nodos  │ │  Flask App  │ │                   │MYSQL_PASSWORD=tu_mysql_password
+
+
+
+```│        │ │             │ │                   │MYSQL_DB=medidoresEnergia
+
+enertrack/
+
+├── enertrack/           # Aplicación Flask│ MQTT   │ │  Dashboards │ │  DB Management    │
+
+│   ├── app.py          # Backend principal
+
+│   ├── telegram_bot.py # Bot de Telegram│ Pub    │ │  API REST   │ │                   │# InfluxDB (generado al primer inicio)
+
+│   ├── templates/      # Plantillas HTML
+
+│   └── static/         # CSS, JS, imágenes└───┬────┘ │  Telegram   │ └─────────┬─────────┘INFLUX_URL=http://influxdb:8086
+
+├── docs/               # Documentación
+
+├── mosquitto/config/   # Configuración MQTT    │      │  Bot        │           │INFLUX_TOKEN=tu_token_de_influx
+
+├── schema.sql         # Schema de base de datos
+
+├── compose.yaml       # Docker Compose    │      └──────┬──────┘           │INFLUX_ORG=IoT
+
+├── .env.example       # Plantilla de configuración
+
+└── README.md          # Este archivo    │             │                  │INFLUX_BUCKET=medidoresEnergia
+
+```
+
+    │    ┌────────┼──────────────────┼──────────┐
+
+## Comandos Útiles
+
+    │    │        │                  │          │# MQTT
+
+```bash
+
+# Ver logs en tiempo real┌───▼────▼───┐ ┌──▼──────┐ ┌────────▼────┐ ┌───▼──────┐DOMINIO=tu_dominio.duckdns.org
+
+docker compose logs -f
+
+│  Mosquitto │ │ InfluxDB│ │  MariaDB    │ │ MariaDB  │MQTT_USR=tu_usuario_mqtt
+
+# Reiniciar un servicio
+
+docker compose restart enertrack│  MQTT      │ │ Series  │ │  Users/     │ │          │MQTT_PASS=tu_password_mqtt
+
+
+
+# Reconstruir después de cambios│  Broker    │ │ Time DB │ │  Nodes      │ │          │PUERTO=443              # Puerto HTTPS (usa 443 si tienes IP pública)
+
+docker compose build enertrack
+
+docker compose up -d enertrack└────────────┘ └─────────┘ └─────────────┘ └──────────┘PUERTO_MQTTS=8883       # Puerto MQTT con SSL (8883 es el estándar)
+
+
+
+# Detener todo```
+
+docker compose down
+
+```# Flask
+
+
+
+## Documentación### 🐳 Servicios DockerFLASK_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+
+
+
+- [DEPLOY.md](docs/DEPLOY.md) - Guía completa de despliegueFERNET_KEY=$(python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+
+- [CONTRIBUTING.md](docs/CONTRIBUTING.md) - Cómo contribuir al proyecto
 
 | Servicio | Tecnología | Puerto | Descripción |
 
+## Seguridad
+
 |----------|------------|--------|-------------|# Telegram Bot
 
-| **enertrack** | Python 3.11 + Flask + Gunicorn | 8006 | Aplicación web y bot de Telegram |enertrackBotToken=tu_bot_token_de_telegram
+- Autenticación de usuarios con hash de contraseñas (Scrypt)
 
-| **mariadb** | MariaDB | 3306 | Base de datos relacional |```
+- Variables de entorno para secretos| **enertrack** | Python 3.11 + Flask + Gunicorn | 8006 | Aplicación web y bot de Telegram |enertrackBotToken=tu_bot_token_de_telegram
+
+- Comunicación HTTPS/TLS en todos los servicios
+
+- MQTT con SSL/TLS (MQTTS)| **mariadb** | MariaDB | 3306 | Base de datos relacional |```
+
+- Archivo `.env` excluido del repositorio
 
 | **influxdb** | InfluxDB 2.x | 8086 | Base de datos de series temporales |
 
+## Contribuir
+
 | **mosquitto** | Eclipse Mosquitto | 1883, 8883 | Broker MQTT con SSL |#### 3. Crear la red Docker
+
+Las contribuciones son bienvenidas. Por favor:
 
 | **swag** | LinuxServer SWAG | 80, 443 | Nginx reverse proxy + Let's Encrypt |
 
-| **phpmyadmin** | PHPMyAdmin | 8080 | Administración de BD web |```bash
+1. Fork el proyecto
 
-docker network create docker_iot-1_default
+2. Crea una rama: `git checkout -b feature/nueva-funcionalidad`| **phpmyadmin** | PHPMyAdmin | 8080 | Administración de BD web |```bash
+
+3. Commit tus cambios: `git commit -m 'Add: nueva funcionalidad'`
+
+4. Push: `git push origin feature/nueva-funcionalidad`docker network create docker_iot-1_default
+
+5. Abre un Pull Request
 
 ## 🚀 Instalación Rápida```
 
+## Licencia
 
+
+
+Este proyecto está bajo la Licencia MIT. Ver [LICENSE](LICENSE) para más detalles.
 
 ### Prerrequisitos#### 4. Levantar los servicios
 
+## Autores
 
 
-- Docker y Docker Compose instalados```bash
 
-- Dominio DuckDNS configurado (gratuito)docker compose up -d
+- Ignacio Behler - [@ignaciobehler](https://github.com/ignaciobehler)
 
-- Bot de Telegram creado con @BotFather```
+- Emiliano Lukoski- Docker y Docker Compose instalados```bash
 
 
+
+## Soporte- Dominio DuckDNS configurado (gratuito)docker compose up -d
+
+
+
+- Issues: [GitHub Issues](https://github.com/ignaciobehler/EnerTrack_V1.0/issues)- Bot de Telegram creado con @BotFather```
+
+- Documentación completa en el directorio `/docs`
+
+
+
+---
 
 ### 1️⃣ Clonar el Repositorio#### 5. Configurar InfluxDB (Primera vez)
+
+Desarrollado con ❤️ para la comunidad IoT
 
 
 
