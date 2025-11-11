@@ -485,7 +485,7 @@ function renderTable(datos, pagina = 1, porPagina = 20) {
       const d = new Date(registro.fecha);
       if (!isNaN(d.getTime())) {
         fecha = d.toLocaleDateString('es-ES');
-        hora = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        hora = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
       } else {
         fecha = registro.fecha;
       }

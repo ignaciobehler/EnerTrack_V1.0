@@ -202,7 +202,7 @@ function updateMetrics() {
   document.getElementById('min-volt').textContent = Math.min(...voltData).toFixed(2) + ' V';
   document.getElementById('min-curr').textContent = Math.min(...currData).toFixed(2) + ' A';
   // Última actualización
-  document.getElementById('last-update-main').innerHTML = '<i class="fas fa-clock me-1"></i>Última actualización: ' + new Date().toLocaleTimeString();
+  document.getElementById('last-update-main').innerHTML = '<i class="fas fa-clock me-1"></i>Última actualización: ' + new Date().toLocaleTimeString('es-ES', { hour12: false });
 }
 
 function updateChart() {

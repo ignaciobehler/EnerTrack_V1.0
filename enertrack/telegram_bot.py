@@ -16,10 +16,9 @@ logging.basicConfig(
 # Obtener el token del bot desde la variable de entorno
 TELEGRAM_TOKEN = os.environ.get('enertrackBotToken')
 
-# URL base de la API Flask - construida dinámicamente desde variables de entorno
-DOMINIO = os.environ.get('DOMINIO', 'localhost')
-PUERTO = os.environ.get('PUERTO', '443')
-API_BASE_URL = os.environ.get('ENERTRACK_API_URL', f'https://{DOMINIO}:{PUERTO}/enertrack')
+# URL base de la API Flask - usar localhost porque el bot corre en el mismo contenedor que Flask
+# No usar la URL externa porque puede causar problemas de SSL/certificados
+API_BASE_URL = os.environ.get('ENERTRACK_API_URL', 'http://localhost:8006')
 
 # Diccionario temporal para mapear códigos de vinculación a usuario_id
 # En producción, deberías almacenar esto en la base de datos o en caché persistente
@@ -67,7 +66,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Si el usuario envía /start <codigo>, intentar vincular
     code = args[0]
     try:
+        logging.info(f"[TELEGRAM] Intentando vincular con URL: {API_BASE_URL}/api/telegram/vincular")
+        logging.info(f"[TELEGRAM] Código: {code}, Chat ID: {chat_id}")
         response = requests.post(f"{API_BASE_URL}/api/telegram/vincular", json={"code": code, "chat_id": chat_id})
+        logging.info(f"[TELEGRAM] Status Code: {response.status_code}")
+        logging.info(f"[TELEGRAM] Response Text (primeros 200 chars): {response.text[:200]}")
         try:
             data = response.json()
         except Exception as e:

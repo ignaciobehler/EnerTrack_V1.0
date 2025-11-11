@@ -291,7 +291,7 @@ function renderTable(labels, valores, unidad, pagina = 1, porPagina = 20) {
     if (typeof label === 'string' && label.length > 10 && label.includes('T')) {
       const d = new Date(label);
       fecha = d.toLocaleDateString('es-ES');
-      hora = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      hora = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     } else {
       hora = label;
     }

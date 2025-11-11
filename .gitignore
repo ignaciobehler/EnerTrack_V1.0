@@ -131,21 +131,29 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Variables de entorno con información sensible
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
 
-#swag related files: ignore all except NGINX conf
+# Archivos de configuración con credenciales
+mosquitto/config/duckdns.ini
+mosquitto/config/passwd
+swag/dns-conf/duckdns.ini
+
+# Datos y logs de servicios
 grafana/
 mosquitto/data/
 mosquitto/log/
-mosquitto/config/duckdns.ini
-mosquitto/config/passwd
 wireguard/
 mariadb/
 influxdb/data/
 influxdb/config/
 !influxdb/.gitkeep
+
+# SWAG/NGINX - ignorar todo excepto configuraciones de ejemplo
 !swag/
 swag/*
 !swag/nginx/
@@ -153,3 +161,21 @@ swag/nginx/*
 !swag/nginx/proxy-confs/
 swag/nginx/proxy-confs/*
 !swag/nginx/proxy-confs/crud.subfolder.conf
+
+# Certificados SSL y claves privadas
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+swag/keys/
+swag/etc/letsencrypt/
+
+# Archivos de SQLite con datos sensibles
+*.sqlite3
+*.db
+
+# Logs que pueden contener información sensible
+*.log
+swag/log/
+swag/fail2ban/
